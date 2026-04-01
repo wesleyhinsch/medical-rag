@@ -1,0 +1,259 @@
+# 🏥 Medical RAG
+
+> Assistente médico inteligente com **RAG (Retrieval-Augmented Generation)** usando **Vertex AI Gemini**, **Cloud SQL pgvector** e **Google Cloud Run**.
+
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-green?logo=springboot)
+![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Run-blue?logo=googlecloud)
+![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Gemini-purple?logo=googlecloud)
+
+---
+
+## 📖 Sobre
+
+Sistema que permite médicos fazerem perguntas em linguagem natural e receberem respostas baseadas em **documentos médicos reais** (bulas, protocolos, guidelines).
+
+### Fluxo
+
+```
+Upload PDF (bula/protocolo) → Chunking → Embedding → pgvector
+                                                        ↓
+Médico pergunta → Busca vetorial → Contexto + Gemini → Resposta com fontes
+```
+
+---
+
+## 🏗 Arquitetura
+
+```
+┌─────────────────────────────────────────────────┐
+│                   DOMAIN                         │
+│  Model: MedicalDocument, MedicalResponse         │
+│  Ports: QueryPort, IngestionPort, StoragePort    │
+├─────────────────────────────────────────────────┤
+│               INFRASTRUCTURE                     │
+│                                                  │
+│  Inbound              Outbound                   │
+│  ┌──────────────┐     ┌────────────────────┐     │
+│  │ REST API     │     │ Vertex AI Gemini   │     │
+│  │ - /api/query │     │ Vertex Embeddings  │     │
+│  │ - /api/ingest│     │ Cloud SQL pgvector │     │
+│  └──────────────┘     │ Google Cloud Storage│    │
+│                       └────────────────────┘     │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠 Tecnologias
+
+| Tecnologia | Uso |
+|---|---|
+| Java 21 | Linguagem |
+| Spring Boot 3.4.1 | Framework |
+| Spring AI | Integração com IA |
+| Vertex AI Gemini 1.5 Flash | LLM |
+| Vertex AI Embeddings | Vetorização de texto |
+| Cloud SQL PostgreSQL + pgvector | Vector store |
+| Google Cloud Storage | Armazenamento de PDFs |
+| Google Cloud Run | Hospedagem serverless |
+| GitHub Actions | CI/CD |
+
+---
+
+## 🔌 Endpoints
+
+### Health
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/health` | Health check |
+
+### Consulta
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/api/query?question={pergunta}&specialty={especialidade}` | Pergunta ao assistente |
+
+**Exemplo:**
+```
+GET /api/query?question=Posso prescrever ibuprofeno para paciente que toma varfarina?
+```
+
+### Ingestão
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/api/ingest/upload` | Upload de PDF + ingestão |
+| `POST` | `/api/ingest/gcs` | Ingerir PDF já no GCS |
+
+**Upload:**
+```bash
+curl -X POST http://localhost:8080/api/ingest/upload \
+  -F "file=@bula-ibuprofeno.pdf" \
+  -F "source=Anvisa" \
+  -F "type=bula" \
+  -F "specialty=geral"
+```
+
+---
+
+## ☁️ Setup Google Cloud
+
+### Pré-requisitos
+- Google Cloud CLI instalado
+- Conta com billing ativo
+
+### Automático
+```bash
+bash setup-gcp.sh <SEU_PROJECT_ID>
+```
+
+### GitHub Secrets
+| Secret | Descrição |
+|---|---|
+| `GCP_SA_KEY` | JSON da Service Account |
+| `GCP_PROJECT_ID` | ID do projeto |
+| `DB_HOST` | IP do Cloud SQL |
+| `DB_NAME` | `medical_rag` |
+| `DB_USER` | `medical_app` |
+| `DB_PASSWORD` | Senha do banco |
+| `GCS_BUCKET` | Nome do bucket |
+
+---
+
+## 🚀 Como rodar localmente
+
+### 1. Clone
+```bash
+git clone <repo-url>
+cd medical-rag
+```
+
+### 2. Variáveis de ambiente
+```powershell
+$env:GCP_PROJECT_ID="seu-project-id"
+$env:GCP_LOCATION="southamerica-east1"
+$env:DB_HOST="localhost"
+$env:DB_NAME="medical_rag"
+$env:DB_USER="postgres"
+$env:DB_PASSWORD="postgres"
+$env:GCS_BUCKET="medical-rag-docs"
+```
+
+### 3. PostgreSQL local com pgvector
+```bash
+docker run -d --name pgvector \
+  -e POSTGRES_DB=medical_rag \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  pgvector/pgvector:pg15
+```
+
+### 4. Execute
+```bash
+mvn spring-boot:run
+```
+
+### 5. Acesse
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui.html
+
+---
+
+## 💰 Custo estimado
+
+| Componente | Custo/mês |
+|---|---|
+| Cloud Storage (20 GB) | ~US$ 0,40 |
+| Cloud SQL (db-f1-micro) | ~US$ 30 |
+| Gemini 1.5 Flash | ~US$ 1-5 |
+| Cloud Run | ~US$ 0-5 |
+| **Total** | **~US$ 35-40/mês** |
+
+---
+
+## 📚 Base Documental
+
+Documentos médicos coletados de fontes oficiais do Ministério da Saúde para alimentar o RAG.
+
+### Fontes
+
+| Fonte | URL | Descrição |
+|---|---|---|
+| **Anvisa - Bulário** | https://consultas.anvisa.gov.br/#/bulario/ | Bulas de medicamentos registrados no Brasil |
+| **CONITEC** | https://www.gov.br/conitec/ | Protocolos clínicos e relatórios de incorporação de tecnologias no SUS |
+| **DATASUS** | https://servicos-datasus.saude.gov.br/ | Sistemas e dados do Ministério da Saúde |
+| **RENAME** | https://www.gov.br/saude/pt-br/composicao/sectics/daf/rename | Relação Nacional de Medicamentos Essenciais do SUS |
+| **OMS** | https://www.who.int/publications | Guidelines clínicos internacionais |
+| **NICE (UK)** | https://www.nice.org.uk/guidance | Guidelines clínicos do Reino Unido |
+| **PubMed** | https://pubmed.ncbi.nlm.nih.gov/ | Artigos científicos open access |
+| **SciELO** | https://www.scielo.br/ | Artigos científicos brasileiros |
+
+### Relatório de Download
+
+| Categoria | Arquivos | Tamanho |
+|---|---|---|
+| **PCDTs** (Protocolos Clínicos e Diretrizes Terapêuticas) | 231 | 306 MB |
+| **CONITEC** (relatórios, resoluções, enquetes) | 488 | 2.089 MB |
+| **RENAME** (medicamentos essenciais) | 6 | 8,5 MB |
+| **Outros** (diretrizes, metodologias, etc) | 395 | 553 MB |
+| **Total** | **1.120** | **~3 GB** |
+
+### Ingestão em lote
+
+Após subir os PDFs para o GCS, usar o endpoint batch:
+
+```bash
+curl -X POST "http://localhost:8080/api/ingest/batch?prefix=documents/pcdt/&source=CONITEC&type=protocolo&specialty=geral"
+curl -X POST "http://localhost:8080/api/ingest/batch?prefix=documents/conitec/&source=CONITEC&type=relatorio&specialty=geral"
+curl -X POST "http://localhost:8080/api/ingest/batch?prefix=documents/rename/&source=Ministerio da Saude&type=rename&specialty=geral"
+```
+
+---
+
+## 🔜 Próximos Passos
+
+- [ ] **Bulas da Anvisa** — Scraping do bulário eletrônico para obter bulas com interações medicamentosas, contraindicações e posologia
+- [ ] **Guidelines da OMS** — Diretrizes clínicas internacionais para casos mais complexos
+- [ ] **Guidelines do NICE (UK)** — Protocolos clínicos detalhados do Reino Unido
+- [ ] **Artigos SciELO** — Artigos científicos brasileiros open access
+- [ ] **Artigos PubMed** — Artigos científicos internacionais (filtrar por Free Full Text)
+- [ ] **Formulário Terapêutico Nacional** — Doses, indicações e interações dos medicamentos do SUS
+- [ ] **Resoluções do CFM** — Pareceres e diretrizes éticas do Conselho Federal de Medicina
+
+---
+
+## 📁 Estrutura
+
+```
+medical-rag/
+├── .github/workflows/deploy.yml
+├── src/main/java/com/medical/rag/
+│   ├── domain/
+│   │   ├── model/
+│   │   │   ├── IngestionRequest.java
+│   │   │   ├── MedicalDocument.java
+│   │   │   └── MedicalResponse.java
+│   │   └── port/
+│   │       ├── IngestionPort.java
+│   │       ├── QueryPort.java
+│   │       └── StoragePort.java
+│   ├── infrastructure/
+│   │   ├── adapter/
+│   │   │   ├── inbound/rest/
+│   │   │   │   ├── HealthController.java
+│   │   │   │   ├── IngestionController.java
+│   │   │   │   └── QueryController.java
+│   │   │   └── outbound/
+│   │   │       ├── llm/GeminiQueryAdapter.java
+│   │   │       ├── storage/GcsStorageAdapter.java
+│   │   │       └── vectorstore/PgVectorIngestionAdapter.java
+│   │   └── config/
+│   │       ├── GcsConfig.java
+│   │       └── GlobalExceptionHandler.java
+│   └── MedicalRagApplication.java
+├── src/main/resources/application.yml
+├── docs/
+├── setup-gcp.sh
+├── Dockerfile
+├── pom.xml
+└── README.md
+```

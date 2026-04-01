@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: medical-rag
+
+  # PostgreSQL + pgvector (Cloud SQL)
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:medical_rag}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  # Spring AI - Vertex AI Gemini
+  ai:
+    vertex:
+      ai:
+        gemini:
+          project-id: ${GCP_PROJECT_ID}
+          location: ${GCP_LOCATION:southamerica-east1}
+          chat:
+            options:
+              model: gemini-1.5-flash
+              temperature: 0.2
+        embedding:
+          project-id: ${GCP_PROJECT_ID}
+          location: ${GCP_LOCATION:southamerica-east1}
+          options:
+            model: textembedding-gecko@003
+
+    # PGVector Store
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        dimensions: 768
+        index-type: hnsw
+
+# Google Cloud Storage
+gcs:
+  bucket: ${GCS_BUCKET:medical-rag-docs}
+
+# Configurações da ingestão
+ingestion:
+  chunk-size: 500
+  chunk-overlap: 100
+
+server:
+  port: 8080
+
+# Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
