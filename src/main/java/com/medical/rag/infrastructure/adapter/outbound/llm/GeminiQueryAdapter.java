@@ -2,6 +2,8 @@ package com.medical.rag.infrastructure.adapter.outbound.llm;
 
 import com.medical.rag.domain.model.MedicalResponse;
 import com.medical.rag.domain.port.QueryPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class GeminiQueryAdapter implements QueryPort {
+
+    private static final Logger log = LoggerFactory.getLogger(GeminiQueryAdapter.class);
 
     private static final String SYSTEM_PROMPT = """
             Você é um assistente médico especializado. Siga estas regras:
@@ -46,6 +50,7 @@ public class GeminiQueryAdapter implements QueryPort {
         }
 
         List<Document> docs = vectorStore.similaritySearch(searchBuilder);
+        log.info("Busca vetorial retornou {} documentos", docs.size());
 
         if (docs.isEmpty()) {
             return new MedicalResponse(
@@ -70,19 +75,24 @@ public class GeminiQueryAdapter implements QueryPort {
                 PERGUNTA DO MÉDICO: %s
                 """.formatted(context, question);
 
-        String answer = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+        try {
+            String answer = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
 
-        // 4. Extrai fontes únicas
-        List<String> sources = docs.stream()
-                .map(d -> "%s (%s)".formatted(
-                        d.getMetadata().getOrDefault("fileName", "N/A"),
-                        d.getMetadata().getOrDefault("source", "N/A")))
-                .distinct()
-                .toList();
+            // 4. Extrai fontes únicas
+            List<String> sources = docs.stream()
+                    .map(d -> "%s (%s)".formatted(
+                            d.getMetadata().getOrDefault("fileName", "N/A"),
+                            d.getMetadata().getOrDefault("source", "N/A")))
+                    .distinct()
+                    .toList();
 
-        return new MedicalResponse(answer, sources);
+            return new MedicalResponse(answer, sources);
+        } catch (Exception e) {
+            log.error("Erro ao chamar Gemini: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }
