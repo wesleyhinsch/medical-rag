@@ -7,6 +7,9 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:medical_rag}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
 
   # Spring AI - Vertex AI Gemini
   ai:
