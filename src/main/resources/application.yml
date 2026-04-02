@@ -36,6 +36,11 @@ spring:
 gcs:
   bucket: ${GCS_BUCKET:medical-rag-docs}
 
+# Google Cloud Pub/Sub
+pubsub:
+  topic: ${PUBSUB_TOPIC:medical-rag-ingest}
+  project: ${GCP_PROJECT_ID}
+
 # Configurações da ingestão
 ingestion:
   chunk-size: 500

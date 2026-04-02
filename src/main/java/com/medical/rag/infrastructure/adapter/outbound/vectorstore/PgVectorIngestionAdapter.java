@@ -7,6 +7,7 @@ import com.medical.rag.domain.port.StoragePort;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -21,16 +22,19 @@ public class PgVectorIngestionAdapter implements IngestionPort {
 
     private final VectorStore vectorStore;
     private final StoragePort storagePort;
+    private final JdbcTemplate jdbcTemplate;
     private final int chunkSize;
     private final int chunkOverlap;
 
     public PgVectorIngestionAdapter(
             VectorStore vectorStore,
             StoragePort storagePort,
+            JdbcTemplate jdbcTemplate,
             @Value("${ingestion.chunk-size}") int chunkSize,
             @Value("${ingestion.chunk-overlap}") int chunkOverlap) {
         this.vectorStore = vectorStore;
         this.storagePort = storagePort;
+        this.jdbcTemplate = jdbcTemplate;
         this.chunkSize = chunkSize;
         this.chunkOverlap = chunkOverlap;
     }
@@ -65,5 +69,10 @@ public class PgVectorIngestionAdapter implements IngestionPort {
         vectorStore.add(chunks);
 
         return doc;
+    }
+
+    @Override
+    public void clearAll() {
+        jdbcTemplate.execute("TRUNCATE TABLE vector_store");
     }
 }

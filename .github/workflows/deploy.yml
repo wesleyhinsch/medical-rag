@@ -45,4 +45,4 @@ jobs:
             --cpu=1 \
             --min-instances=1 \
             --max-instances=3 \
-            --set-env-vars="GCP_PROJECT_ID=${{ env.PROJECT_ID }},GCP_LOCATION=${{ env.REGION }},DB_HOST=${{ secrets.DB_HOST }},DB_NAME=${{ secrets.DB_NAME }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},GCS_BUCKET=${{ secrets.GCS_BUCKET }}"
+            --set-env-vars="GCP_PROJECT_ID=${{ env.PROJECT_ID }},GCP_LOCATION=${{ env.REGION }},DB_HOST=${{ secrets.DB_HOST }},DB_NAME=${{ secrets.DB_NAME }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},GCS_BUCKET=${{ secrets.GCS_BUCKET }},PUBSUB_TOPIC=medical-rag-ingest"

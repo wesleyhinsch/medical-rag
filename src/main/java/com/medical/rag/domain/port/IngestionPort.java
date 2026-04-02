@@ -6,4 +6,6 @@ import com.medical.rag.domain.model.MedicalDocument;
 public interface IngestionPort {
 
     MedicalDocument ingest(IngestionRequest request);
+
+    void clearAll();
 }
