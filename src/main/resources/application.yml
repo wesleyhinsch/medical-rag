@@ -20,7 +20,7 @@ spring:
           location: us-central1
           chat:
             options:
-              model: gemini-1.5-flash-001
+              model: gemini-1.5-flash
               temperature: 0.2
         embedding:
           project-id: ${GCP_PROJECT_ID}
