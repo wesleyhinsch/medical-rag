@@ -36,7 +36,7 @@ public class GeminiQueryAdapter implements QueryPort {
     @Override
     public MedicalResponse query(String question, String specialty) {
         // 1. Busca chunks relevantes no pgvector
-        var searchBuilder = SearchRequest.query(question).withTopK(5);
+        var searchBuilder = SearchRequest.query(question).withTopK(5).withSimilarityThreshold(0.7);
 
         if (specialty != null && !specialty.isBlank()) {
             var filter = new FilterExpressionBuilder()

@@ -147,4 +147,11 @@ public class IngestionController {
         log.info("Vector store limpo");
         return Map.of("status", "OK", "message", "Vector store limpo com sucesso");
     }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Estatísticas do vector store",
+            description = "Retorna total de documentos e chunks no vector store")
+    public Map<String, Object> stats() {
+        return ingestionPort.stats();
+    }
 }
