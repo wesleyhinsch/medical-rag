@@ -44,6 +44,10 @@ pubsub:
   topic: ${PUBSUB_TOPIC:medical-rag-ingest}
   project: ${GCP_PROJECT_ID}
 
+# Telegram Bot
+telegram:
+  bot-token: ${TELEGRAM_BOT_TOKEN:}
+
 # Configurações da ingestão
 ingestion:
   chunk-size: 500

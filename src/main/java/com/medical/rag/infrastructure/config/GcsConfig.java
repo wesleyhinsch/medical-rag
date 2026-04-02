@@ -5,6 +5,7 @@ import com.google.cloud.storage.StorageOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class GcsConfig {
@@ -16,5 +17,10 @@ public class GcsConfig {
             builder.setProjectId(projectId);
         }
         return builder.build().getService();
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }
