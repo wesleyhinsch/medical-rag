@@ -24,7 +24,7 @@ spring:
               temperature: 0.2
         embedding:
           project-id: ${GCP_PROJECT_ID}
-          location: us-central1
+          location: southamerica-east1
           options:
             model: textembedding-gecko@003
 
