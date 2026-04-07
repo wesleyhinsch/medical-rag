@@ -144,4 +144,10 @@ public class GeminiQueryAdapter implements QueryPort {
 
         return vectorStore.similaritySearch(searchBuilder);
     }
+
+    @Override
+    public void clearSession(String sessionId) {
+        chatHistory.remove(sessionId);
+        log.info("[SESSION_CLEAR] sessionId={}", sessionId);
+    }
 }

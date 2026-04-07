@@ -49,13 +49,19 @@ public class TelegramWebhookController {
                     "• Qual o protocolo de hipertensão?\n\n" +
                     "Comandos:\n" +
                     "/start - Menu inicial\n" +
+                    "/novo - Novo paciente (limpa histórico)\n" +
                     "/ajuda - Como usar");
         } else if (text.equals("/ajuda")) {
             telegram.sendMessage(chatId,
                     "📖 Como usar:\n\n" +
                     "Basta enviar sua pergunta médica em linguagem natural.\n\n" +
                     "O sistema busca nos documentos oficiais do SUS e gera uma resposta com as fontes.\n\n" +
+                    "Use /novo quando for consultar sobre outro paciente.\n\n" +
                     "⚠️ As respostas são apenas referência e não substituem avaliação médica profissional.");
+        } else if (text.equals("/novo")) {
+            queryPort.clearSession("telegram-" + chatId);
+            telegram.sendMessage(chatId,
+                    "🔄 Histórico limpo! Pode começar uma nova consulta.");
         } else {
             telegram.sendMessage(chatId, "🔍 Buscando nos protocolos clínicos...");
 

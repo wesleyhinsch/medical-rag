@@ -7,4 +7,6 @@ public interface QueryPort {
     MedicalResponse query(String question, String specialty);
 
     MedicalResponse query(String question, String specialty, String sessionId);
+
+    void clearSession(String sessionId);
 }
