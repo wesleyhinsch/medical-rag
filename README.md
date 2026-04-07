@@ -18,7 +18,9 @@ Sistema que permite médicos fazerem perguntas em linguagem natural e receberem 
 ```
 Upload PDF (bula/protocolo) → Chunking → Embedding → pgvector
                                                         ↓
-Médico pergunta → Busca vetorial → Contexto + Gemini → Resposta com fontes
+Médico pergunta → Busca vetorial → Contexto + Histórico + Gemini → Resposta com fontes
+                      ↑                                                    ↓
+                      └──────────── Memória de Conversa ←───────────────────┘
 ```
 
 ---
@@ -71,11 +73,24 @@ Médico pergunta → Busca vetorial → Contexto + Gemini → Resposta com fonte
 ### Consulta
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `GET` | `/api/query?question={pergunta}&specialty={especialidade}` | Pergunta ao assistente |
+| `GET` | `/api/query?question={pergunta}&specialty={especialidade}&sessionId={sessão}` | Pergunta ao assistente |
 
-**Exemplo:**
+| Parâmetro | Obrigatório | Descrição |
+|---|---|---|
+| `question` | Sim | Pergunta em linguagem natural |
+| `specialty` | Não | Filtrar por especialidade médica |
+| `sessionId` | Não | ID da sessão para manter contexto entre perguntas |
+
+**Exemplo (pergunta isolada):**
 ```
 GET /api/query?question=Posso prescrever ibuprofeno para paciente que toma varfarina?
+```
+
+**Exemplo (conversa contínua com sessionId):**
+```
+GET /api/query?question=Posso prescrever ibuprofeno para paciente que toma varfarina?&sessionId=medico-123
+GET /api/query?question=E se o paciente for idoso?&sessionId=medico-123
+GET /api/query?question=Qual alternativa mais segura nesse caso?&sessionId=medico-123
 ```
 
 ### Ingestão
@@ -209,6 +224,42 @@ curl -X POST "http://localhost:8080/api/ingest/batch?prefix=documents/rename/&so
 
 ---
 
+## 💬 Memória de Conversa
+
+O sistema mantém **histórico de conversa por sessão**, permitindo diálogos contínuos onde o médico pode fazer perguntas de acompanhamento sem repetir o contexto.
+
+### Como funciona
+
+- **API REST**: passe o parâmetro `sessionId` para manter contexto entre chamadas
+- **Telegram**: automático — cada chat do Telegram já mantém seu próprio histórico
+- O histórico armazena as últimas **10 interações** (pergunta + resposta) por sessão
+- Sem `sessionId`, cada pergunta é tratada de forma isolada (comportamento anterior)
+- Armazenamento in-memory (`ConcurrentHashMap`) — histórico é perdido ao reiniciar o serviço
+
+### Exemplo de conversa no Telegram
+
+```
+Médico: Qual o protocolo de tratamento para diabetes tipo 2?
+Bot:    [resposta com fontes dos PCDTs]
+
+Médico: E se o paciente tiver insuficiência renal?
+Bot:    [resposta considerando diabetes + insuficiência renal]
+
+Médico: Posso usar metformina nesse caso?
+Bot:    [resposta contextualizada com todo o histórico]
+```
+
+### Arquivos alterados
+
+| Arquivo | Alteração |
+|---|---|
+| `QueryPort.java` | Novo método `query(question, specialty, sessionId)` |
+| `GeminiQueryAdapter.java` | Chat history in-memory por sessionId com `ConcurrentHashMap` |
+| `QueryController.java` | Novo parâmetro opcional `sessionId` |
+| `TelegramWebhookController.java` | Passa `chatId` como sessionId automaticamente |
+
+---
+
 ## 🔜 Próximos Passos
 
 - [ ] **Bulas da Anvisa** — Scraping do bulário eletrônico para obter bulas com interações medicamentosas, contraindicações e posologia
@@ -241,10 +292,12 @@ medical-rag/
 │   │   │   ├── inbound/rest/
 │   │   │   │   ├── HealthController.java
 │   │   │   │   ├── IngestionController.java
-│   │   │   │   └── QueryController.java
+│   │   │   │   ├── QueryController.java
+│   │   │   │   └── TelegramWebhookController.java
 │   │   │   └── outbound/
 │   │   │       ├── llm/GeminiQueryAdapter.java
 │   │   │       ├── storage/GcsStorageAdapter.java
+│   │   │       ├── telegram/TelegramAdapter.java
 │   │   │       └── vectorstore/PgVectorIngestionAdapter.java
 │   │   └── config/
 │   │       ├── GcsConfig.java
