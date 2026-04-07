@@ -22,10 +22,11 @@ public class QueryController {
 
     @GetMapping
     @Operation(summary = "Consultar o assistente médico",
-            description = "Faz uma pergunta e recebe resposta baseada em documentos médicos")
+            description = "Faz uma pergunta e recebe resposta baseada em documentos médicos. Use sessionId para manter contexto entre perguntas.")
     public MedicalResponse query(
             @RequestParam String question,
-            @RequestParam(required = false) String specialty) {
-        return queryPort.query(question, specialty);
+            @RequestParam(required = false) String specialty,
+            @RequestParam(required = false) String sessionId) {
+        return queryPort.query(question, specialty, sessionId);
     }
 }

@@ -60,7 +60,7 @@ public class TelegramWebhookController {
             telegram.sendMessage(chatId, "🔍 Buscando nos protocolos clínicos...");
 
             try {
-                MedicalResponse response = queryPort.query(text, null);
+                MedicalResponse response = queryPort.query(text, null, "telegram-" + chatId);
 
                 StringBuilder sb = new StringBuilder();
                 sb.append(response.answer());
