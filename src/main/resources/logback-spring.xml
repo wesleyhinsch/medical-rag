@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Local: formato legível com MDC -->
+    <springProfile name="!gcp">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{sessionId}] - %msg%n</pattern>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- Cloud Run: JSON estruturado (compatível com Cloud Logging) -->
+    <springProfile name="gcp">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>sessionId</includeMdcKeyName>
+                <includeMdcKeyName>specialty</includeMdcKeyName>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+
+</configuration>
