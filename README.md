@@ -260,7 +260,54 @@ Bot:    [resposta contextualizada com todo o histórico]
 
 ---
 
-## 🔜 Próximos Passos
+## 🎓 MBA Full Cycle — Engenharia de Software com IA
+
+Este projeto é desenvolvido aplicando conceitos do **MBA em Engenharia de Software com IA** da Full Cycle.
+
+### ✅ Tópicos já aplicados no projeto
+
+| Tópico | Disciplina do MBA | Implementação no Medical RAG |
+|---|---|---|
+| **RAG (Retrieval-Augmented Generation)** | Fundamentos de IA / Aplicações com IA | Busca vetorial → contexto → Gemini (`GeminiQueryAdapter`) |
+| **Embeddings e representações vetoriais** | Fundamentos de IA | Vertex AI Embeddings `textembedding-gecko@003` |
+| **Banco de dados vetorial** | Arquitetura na era da IA | Cloud SQL PostgreSQL + pgvector com índice HNSW |
+| **Chunking e organização semântica** | Aplicações com IA (RAG) | `TokenTextSplitter` — 500 tokens, 100 overlap (`PgVectorIngestionAdapter`) |
+| **Ingestão de fontes externas (PDFs)** | Aplicações com IA (RAG) | `PagePdfDocumentReader` + Google Cloud Storage |
+| **LLM (modelo de linguagem)** | Fundamentos de IA | Vertex AI Gemini 2.5 Flash, temperatura 0.2 |
+| **Memória de conversa** | Aplicações com IA (LangChain) | `ConcurrentHashMap` com histórico por sessionId — 10 interações |
+| **System Prompt** | Prompt Engineering | Prompt com regras para o assistente médico (`SYSTEM_PROMPT`) |
+| **Arquitetura Hexagonal (Ports & Adapters)** | Arquitetura na era da IA | `domain/port` + `infrastructure/adapter` (inbound/outbound) |
+| **Cloud Providers e serviços-chave** | Arquitetura na era da IA | GCP: Cloud Run, Cloud SQL, GCS, Vertex AI, Pub/Sub |
+| **Mensageria e processamento distribuído** | Arquitetura na era da IA | Google Cloud Pub/Sub para ingestão em lote |
+| **API REST** | Desenvolvimento de Software | Spring Boot + Swagger/OpenAPI |
+| **CI/CD** | DevOps e SRE com IA | GitHub Actions → Cloud Run |
+| **Logging estruturado** | DevOps e SRE com IA | SLF4J + MDC + Logstash JSON encoder |
+| **Busca com filtros por metadata** | Aplicações com IA (RAG) | `FilterExpressionBuilder` por specialty |
+| **Integração com chat (bot)** | Aplicações com IA | Telegram Webhook com sessão automática por chatId |
+
+### 🔜 Tópicos a implementar
+
+| Tópico | Disciplina do MBA | O que será feito |
+|---|---|---|
+| **Prompt Engineering avançado** | Prompt Engineering | Chain of Thought, few-shot, ReAct, versionamento de prompts |
+| **Caching de tokens e embeddings** | Arquitetura na era da IA | Cache de respostas e embeddings para reduzir custo e latência |
+| **Agentes autônomos** | Desenvolvimento de Agentes | Agentes que planejam, decidem e executam ações médicas |
+| **Orquestração de agentes** | Desenvolvimento de Agentes | LangChain, LangGraph, CrewAI ou Google ADK |
+| **MCP (Model Context Protocol)** | Protocolos de Comunicação | Servidor MCP para expor ferramentas médicas |
+| **A2A (Agent to Agent)** | Protocolos de Comunicação | Comunicação entre agentes especializados |
+| **Guardrails e segurança LLM** | Arquitetura na era da IA | Proteção contra prompt injection, jailbreaking, OWASP Top 10 LLM |
+| **Re-ranking de resultados** | Aplicações com IA (RAG) | Reordenação por relevância após busca vetorial |
+| **Observabilidade com IA** | DevOps e SRE com IA | Métricas de tokens, latência, custo por request |
+| **Controle de custos** | Arquitetura na era da IA | Tracking de input/output tokens, otimização de prompts |
+| **Testes de prompts** | Arquitetura na era da IA | Testes automatizados de qualidade de resposta |
+| **Design Docs** | Design Docs com IA | ADRs, RFCs, System Design docs |
+| **DevSecOps** | DevOps e SRE com IA | SAST/DAST no pipeline, análise de vulnerabilidades |
+| **Context Engineering** | Arquitetura na era da IA | Contexto dinâmico, versionamento, otimização por custo |
+| **Fine-tuning** | Fundamentos de IA | Modelo especializado para domínio médico brasileiro |
+
+---
+
+## 🔜 Próximos Passos — Base Documental
 
 - [ ] **Bulas da Anvisa** — Scraping do bulário eletrônico para obter bulas com interações medicamentosas, contraindicações e posologia
 - [ ] **Guidelines da OMS** — Diretrizes clínicas internacionais para casos mais complexos
@@ -310,3 +357,20 @@ medical-rag/
 ├── pom.xml
 └── README.md
 ```
+
+---
+
+## ⚠️ Débito Técnico
+
+| # | Item | Prioridade | Descrição |
+|---|---|---|---|
+| 1 | **Rotacionar credenciais expostas** | 🔴 Crítica | `DB_PASSWORD` e `TELEGRAM_BOT_TOKEN` foram expostos em histórico de chat. Rotacionar imediatamente e atualizar nos GitHub Secrets e Cloud Run env vars. |
+| 2 | **Secrets em variáveis de ambiente** | 🔴 Alta | Migrar credenciais sensíveis (DB_PASSWORD, TELEGRAM_BOT_TOKEN) para **Google Secret Manager** em vez de env vars diretas no Cloud Run. |
+| 3 | **Memória de conversa in-memory** | 🟡 Média | `ConcurrentHashMap` perde histórico ao reiniciar. Migrar para Redis ou Cloud SQL para persistência entre deploys. |
+| 4 | **Sem testes automatizados** | 🟡 Média | Projeto não possui testes unitários nem de integração. Adicionar testes para adapters, ports e fluxo RAG. |
+| 5 | **Sem rate limiting** | 🟡 Média | API e bot Telegram não possuem controle de taxa de requisições. Risco de abuso e custos inesperados com Vertex AI. |
+| 6 | **Sem autenticação na API** | 🟡 Média | Endpoints REST são públicos (`--allow-unauthenticated`). Avaliar adicionar API key ou OAuth para ambientes de produção. |
+| 7 | **Sem validação de input** | 🟡 Média | Sem proteção contra prompt injection no input do usuário. Implementar sanitização e guardrails. |
+| 8 | **Sem observabilidade de custos** | 🟠 Baixa | Sem tracking de tokens consumidos (input/output) por request. Dificulta controle de custos com Vertex AI. |
+| 9 | **Sem health check do banco** | 🟠 Baixa | Endpoint `/health` não valida conexão com Cloud SQL nem pgvector. |
+| 10 | **Duplicação de ingestão** | 🟠 Baixa | Verificação de duplicatas usa apenas `fileName` no metadata. Pode falhar se o mesmo PDF for re-uploadado com nome diferente. |
